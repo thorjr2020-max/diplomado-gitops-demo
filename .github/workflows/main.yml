@@ -1,0 +1,41 @@
+name: Robot de Despliegue GitOps
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  despliegue-estatico:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Ejecutar validacion de texto con Python
+        run: |
+          python -c "print('Iniciando validacion automatica de archivos...')"
+          python -c "with open('index.html', 'r') as f: contenido = f.read(); print(f'Tamanio del archivo procesado: {len(contenido)} bytes')"
+
+      - name: Publicar en servidor estatico (GitHub Pages)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+  publicar:
+    needs: despliegue-estatico
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar sitio estatico
+        id: deployment
+        uses: actions/deploy-pages@v4
